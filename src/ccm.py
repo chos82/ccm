@@ -15,16 +15,35 @@ import logging
 import unittest
 
 SEPERATOR = '\n###################################################################\n'
-GREETING  = SEPERATOR + '\nOpenCV CAM CAPTURE MANIPULATOR HAS STARTED\n' + SEPERATOR 
-STD_MSG   = 'Oh shit. Something BAD happened :('
+__GREETING__  = SEPERATOR + '\nOpenCV CAM CAPTURE MANIPULATOR HAS STARTED\n' + SEPERATOR 
+__STD_MSG__   = 'Oh shit. Something BAD happened :('
 
-modells = ['haarcascade_frontalface_default.xml']
+__haarcascades__ = dict({
+        'eye': 'haarcascade_eye.xml',
+        'eyeglasses': 'haarcascade_eye_tree_eyeglasses.xml',
+        'frontalcatface': 'haarcascade_frontalcatface.xml',
+        'frontalcatface_extended': 'haarcascade_frontalcatface_extended.xml',
+        'frontalface_default':  'haarcascade_frontalface_default.xml',
+        'frontalface_alt': 'haarcascade_frontalface_alt.xml',
+        'frontalface_alt2': 'haarcascade_frontalface_alt2.xml',
+        'frontalface_alt_tree': 'haarcascade_frontalface_alt_tree.xml',
+        'fullbody': 'haarcascade_fullbody.xml',
+        'lefteye':'haarcascade_lefteye_2splits.xml',
+        'license_plate_rus':'haarcascade_license_plate_rus_16stages.xml',
+        'lowerbody': 'haarcascade_lowerbody.xml',
+        'profileface': 'haarcascade_profileface.xml',
+        'righteye_2splits': 'haarcascade_righteye_2splits.xml',
+        'russian_plate_number': 'haarcascade_russian_plate_number.xml',
+        'smile': 'haarcascade_smile.xml',
+        'upperbody': 'haarcascade_upperbody.xml'
+    })
 
 '''
 this class is mediating (mediator-pattern) from the OpenCV c-binaries to python-language
 '''
 class OCVDetector:
-    face_classifier = cv.CascadeClassifier(cv.data.haarcascades + modells[0])
+    face_classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__['fullbody'])
+    fullbody_classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__['frontalface_default'])
     logger = None
     cap = None
 
@@ -41,7 +60,7 @@ class OCVDetector:
         if not self.cap.isOpened():
             logger.error("Cannot open camera")
             exit(-1)
-        logger.info(GREETING)
+        logger.info(__GREETING__)
 
 
     '''
@@ -52,7 +71,8 @@ class OCVDetector:
             raise Exception('OCVDetector.detect_bounding_box(): passed argument has wrong type')
         
         gray_image = cv.cvtColor(vid, cv.COLOR_BGR2GRAY)
-        faces = self.face_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
+        #faces = self.face_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
+        faces = self.fullbody_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
         if(len(faces)==0):
             self.logger.info('no detectable found')
         else:
