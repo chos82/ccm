@@ -1,4 +1,4 @@
-# ccm
+# ccm (cam capture manipulation)
 ## OpenCV with python-bindings
 
 ### NEXT STEPS:
