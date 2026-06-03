@@ -1,6 +1,7 @@
-# ccm: OpenCV with python-bindings
+# ccm
+## OpenCV with python-bindings
 
-## NEXT STEPS:
+### NEXT STEPS:
 - look at: [project issues](https://github.com/users/chos82/projects/1)
 
 **just plaiing around with some cam and detection algorithms of openCV**
