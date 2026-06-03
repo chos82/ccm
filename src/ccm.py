@@ -14,43 +14,43 @@ import cv2 as cv
 import logging
 import unittest
 
+SEPERATOR = '\n###################################################################\n'
+GREETING  = SEPERATOR + '\nOpenCV CAM CAPTURE MANIPULATOR HAS STARTED\n' + SEPERATOR 
+STD_MSG   = 'Oh shit. Something BAD happened :('
+
+modells = ['haarcascade_frontalface_default.xml']
+
+'''
+this class is mediating (mediator-pattern) from the OpenCV c-binaries to python-language
+'''
 class OCVDetector:
-    logger = logging.getLogger('cam-cap')
-    face_classifier = cv.CascadeClassifier(
-            cv.data.haarcascades + "haarcascade_frontalface_default.xml"
-        )
+    face_classifier = cv.CascadeClassifier(cv.data.haarcascades + modells[0])
+    logger = None
+    cap = None
 
-    def __init__(self):
-        # create logger with 'spam_application'
-        logger = logging.getLogger('cam-cap')
-        logger.setLevel(logging.DEBUG)
-        # create file handler which logs even debug messages
-        fh = logging.FileHandler('cam-cap.log')
-        fh.setLevel(logging.DEBUG)
-        # create console handler with a higher log level
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.INFO)
-        # create formatter and add it to the handlers
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        fh.setFormatter(formatter)
-        ch.setFormatter(formatter)
-        # add the handlers to the logger
-        logger.addHandler(fh)
-        logger.addHandler(ch)
+    def __init__(self, logger = None):
+        self.logger = logger
+        if(logger is None): print('LOGGER MUST BE PROVIDED!!!')
+        self.cap = cv.VideoCapture(0)
         
-        sep = '######################################'
-        logger.info(sep)
-        logger.info('starting cam capture manipulator')
-        logger.info(sep)
-        
-        
-    cap = cv.VideoCapture(0)
-    if not cap.isOpened():
-        print("Cannot open camera")
-        exit()
+        cvFile = cv.__file__
+        logger.info("successfully run \'import cv2 as cv\', OpenCV`s file is: " + cvFile)
+        if(self.cap == None):
+            logger.error('video capture could not be initialized')
+            exit(-1)
+        if not self.cap.isOpened():
+            logger.error("Cannot open camera")
+            exit(-1)
+        logger.info(GREETING)
 
 
+    '''
+    detects bounding boxes, according to selected ai-modell
+    '''
     def detect_bounding_box(self, vid):
+        if(not isinstance(vid, np.ndarray)):
+            raise Exception('OCVDetector.detect_bounding_box(): passed argument has wrong type')
+        
         gray_image = cv.cvtColor(vid, cv.COLOR_BGR2GRAY)
         faces = self.face_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
         if(len(faces)==0):
@@ -70,18 +70,23 @@ class OCVDetector:
 # @returns largest bounding box of frames l1, l2
     def max_bb(self, l1, l2=[]):
         l = []
-        if(isinstance(l1, np.ndarray)):
+        isNumpy_a = isinstance(l1, np.ndarray)
+        isNumpy_b = isinstance(l2, np.ndarray)
+        if(isNumpy_a):
             l = l1
-        if(isinstance(l2, np.ndarray)):
+        if(isNumpy_b):
             l = l2
+        if(not(isNumpy_a and isNumpy_b)):
+            raise Exception('ArgumentError')
             
-        x = l.shape[0]
+        x = l[0].shape
         y = l.shape[1]
         
         if(isinstance(l1, np.ndarray) and isinstance(l2, np.ndarray)):
             self.logger.info('???????????')
             #TODO
         
+        self.logger.info('shape of l[0]')
         self.logger.info(x)
         
         return None
@@ -137,69 +142,142 @@ class OCVDetector:
         
         return (x,y,w,h)
     
+    '''
+    executes the detection
+    @return -1 indicates unsuccessful execution
+    '''
     def run(self):
+        i = 0
         while True:
+            self.logger.info(str(i)+' times run')
+            i = i+1
+            
             # Capture frame-by-frame
-            ret, frame = self.cap.read()
-
-            # if frame is read correctly ret is True
-            if not ret:
-                print("Can't receive frame (stream end?). Exiting ...")
-                break
+            frame = self.readCapture()
+            
             # Our operations on the frame come here
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-            # detct and draw bounding box
+            # detect and draw bounding box
             draw = []
             detected_objects = self.detect_bounding_box(frame)
-    
             self.draw_bounding_box(frame, detected_objects)
-    
-            try:
-                _f = self.unwrap_numpy(detected_objects)
-            except:
-                self.logger.error('\n\n\n   unwrapping of numpy array failed') #last line
-                #raise Exception('unwrapping of numpy array failed')
-                return -1
-        
-            draw += self.max_bb(frame)
-            self.draw_bounding_box(frame, draw)
-    
-    
-            # Find Canny edges 
-            #edged = cv.Canny(frame, 30, 200) 
-    
-            # Finding Contours 
-            # Use a copy of the image e.g. edged.copy()
-            # since findContours alters the image 
-            copy = gray.copy() 
-            contours, hierarchy = cv.findContours(copy, 
-                                  cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE) 
-    
-            # Draw all contours 
-            # -1 signifies drawing all contours 
-            cv.drawContours(copy, contours, -1, (0, 255, 0), 3) 
-    
-            # Display the resulting frame
+ 
             cv.imshow('Cam Capture Manipulation', frame)
             if cv.waitKey(1) == ord('q'):
                 break
         
-            # When everything done, release the capture
-            self.cap.release()
-            cv.destroyAllWindows()
+        # When everything done, release the capture
+        self.cap.release()
+        cv.destroyAllWindows()
         
-        return
-    
+        return 0
+
+    '''
+    wrapper for OpenCV function
+    '''
+    def readCapture(self):
+        # Capture frame-by-frame
+        ret, frame = self.cap.read()
+        # if frame is read correctly ret is True
+        if not ret:
+            raise Exception('OCVDetector.readCapture(): could not receive video stream')
+        return frame
+
 # --------class end-------
-# end of class OCVDetector  
+# end of class OCVDetector
+
+def initLogger():
+    # create logger with 'spam_application'
+    logger = logging.getLogger('cam-cap-starter')
+    logger.setLevel(logging.DEBUG)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler('cam-cap-starter.log')
+    fh.setLevel(logging.DEBUG)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+    return logger
+
+def main():
+    logger = initLogger()
+    Det = OCVDetector(logger)
+    det = None
+    maxTries =  True
+    i = 0
+    logger.info('main(): event-loop')
+    while(True):
+        try:
+            det = Det.run()
+            logger.info('executed OCVDetector.run()')
+        except:
+            continue
+        i = i+1
+        logger.info('run ' + str(i) + ' times')
+        if(det == -1):
+            logger.error('no retrieval possible in OCVDetector')
+            continue
+        try:
+            det = Det.run()
+            logger.info('executed OCVDetector.run()')
+        except:
+            exit(-1)
+        if(not det == None):
+            logger.info('a frame was retrieved successfully')
+ 
+ 
+if __name__ == '__main__':
+    main()
+            
+# ----start of tests-------
+# the unit-tests begin here
     
 class OCVDetectorTest(unittest.TestCase):
+    Det = None
     def testInitialization(self):
-        Det = OCVDetector()
-        self.assertTrue(Det is not None, 'successfully initialized an instance of OCVDetector')
-        cap = Det.cap
+        logger = initLogger()
+        self.Det = OCVDetector(logger)
+        self.assertTrue(self.Det is not None, 'successfully initialized an instance of OCVDetector')
+        cap = self.Det.cap
         self.assertTrue(cap is not None, 'instance has a capture field')
+        logger = self.Det.logger
+        self.assertTrue(logger is not None, 'instance has been provided a logger')
+        
+    def testRun(self):
+        if(self.Det is None): self.Det = self.testInitialization()
+        self.Det.run()
+        # TODO: no assertions yet!
+        
+    def testUnwrapPy(self):
+        if(self.Det is None): self.Det = self.testInitialization()
+        cap = self.Det.readCapture()
+        boundingBox = self.Det.unwrap_numpy(cap)
+        isTuple = isinstance(boundingBox, tuple)
+        self.assertTrue(isTuple, 'OCVDetector.unwrapNumpy correctly returns a value of type tuple')
+        print('shape:::::' + str(boundingBox.shape))
+        
+    def testDetectBoundingBox(self):
+        if(self.Det is None): self.Det = self.testInitialization()
+        detectedObject = self.Det.detect_bounding_box()
+        t = type(detectedObject)
+        print('type of detected objects') #remove
+        print(t)                          #remove
+        isTuple = isinstance(detectedObject, np.ndarray)
+        self.assertTrue(isTuple, 'OCVDetector.detect_bounding_box correctly returns a value of type tuple')
+        self.assertTrue(detectedObject.shape == 1)
+                
+        
+        
+class ScriptTest(unittest.TestCase):
+    def testMainProcedure(self):
+        main()
         
     
         
