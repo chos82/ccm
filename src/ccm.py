@@ -15,16 +15,55 @@ import logging
 import unittest
 
 SEPERATOR = '\n###################################################################\n'
-GREETING  = SEPERATOR + '\nOpenCV CAM CAPTURE MANIPULATOR HAS STARTED\n' + SEPERATOR 
-STD_MSG   = 'Oh shit. Something BAD happened :('
+__GREETING__  = SEPERATOR + '\nOpenCV CAM CAPTURE MANIPULATOR HAS STARTED\n' + SEPERATOR 
+__STD_MSG__   = 'Oh shit. Something BAD happened :('
 
-modells = ['haarcascade_frontalface_default.xml']
+EYE = 'eye',
+EYEGLASSES = 'eyeglasses',
+FRONTALFACE = 'frontalcatface',
+FRONTALFACE_EXTENDED = 'frontalcatface_extended',
+FRONTALFACE_DEFAULT = 'frontalface_defaultl',
+FRONTALFACE_ALT = 'frontalface_alt',
+FRONTALFACE_ALT_2 = 'frontalface_alt2',
+FRONTALFACE_ALT_TREE = 'frontalface_alt_tree',
+FULLBODY = 'fullbody',
+LEFTEYE = 'lefteye',
+LICENSE_PLATE_RUS = 'license_plate_rus',
+LOWERBODY = 'lowerbody',
+PROFILFACE = 'profileface',
+RIGHTEYE = 'righteye',
+RUSSIAN_PLATE_NUMBER = 'russian_plate_number',
+SMILE = 'smile',
+UPPERBODY = 'upperbody'
+
+__models__= [
+    (EYE, 'haarcascade_eye.xml'),
+    (EYEGLASSES, 'haarcascade_eye_tree_eyeglasses.xml'),
+    (FRONTALFACE, 'haarcascade_frontalcatface.xml'),
+    (FRONTALFACE_EXTENDED, 'haarcascade_frontalcatface_extended.xml'),
+    (FRONTALFACE_DEFAULT, 'haarcascade_frontalface_default.xml'),
+    (FRONTALFACE_ALT, 'haarcascade_frontalface_alt.xml'),
+    (FRONTALFACE_ALT_2, 'haarcascade_frontalface_alt2.xml'),
+    (FRONTALFACE_ALT_TREE, 'haarcascade_frontalface_alt_tree.xml'),
+    (FULLBODY, 'haarcascade_fullbody.xml'),
+    (LEFTEYE, 'haarcascade_lefteye_2splits.xml'),
+    (LICENSE_PLATE_RUS, 'haarcascade_license_plate_rus_16stages.xml'),
+    (LOWERBODY, 'haarcascade_lowerbody.xml'),
+    (PROFILFACE, 'haarcascade_profileface.xml'),
+    (RIGHTEYE, 'haarcascade_righteye_2splits.xml'),
+    (RUSSIAN_PLATE_NUMBER, 'haarcascade_russian_plate_number.xml'),
+    (SMILE, 'haarcascade_smile.xml'),
+    (UPPERBODY, 'haarcascade_upperbody.xml')
+]
+
+__haarcascades__ = dict(__models__) 
 
 '''
 this class is mediating (mediator-pattern) from the OpenCV c-binaries to python-language
 '''
 class OCVDetector:
-    face_classifier = cv.CascadeClassifier(cv.data.haarcascades + modells[0])
+    classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__[FRONTALFACE_DEFAULT])
+    #classifier = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
     logger = None
     cap = None
 
@@ -41,9 +80,10 @@ class OCVDetector:
         if not self.cap.isOpened():
             logger.error("Cannot open camera")
             exit(-1)
-        logger.info(GREETING)
-
-
+        logger.info(__GREETING__)
+        self.logger.info(FRONTALFACE_DEFAULT)
+        
+        
     '''
     detects bounding boxes, according to selected ai-modell
     '''
@@ -52,7 +92,8 @@ class OCVDetector:
             raise Exception('OCVDetector.detect_bounding_box(): passed argument has wrong type')
         
         gray_image = cv.cvtColor(vid, cv.COLOR_BGR2GRAY)
-        faces = self.face_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
+        #faces = self.face_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
+        faces = self.classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
         if(len(faces)==0):
             self.logger.info('no detectable found')
         else:
@@ -149,7 +190,6 @@ class OCVDetector:
     def run(self):
         i = 0
         while True:
-            self.logger.info(str(i)+' times run')
             i = i+1
             
             # Capture frame-by-frame
@@ -166,6 +206,7 @@ class OCVDetector:
             cv.imshow('Cam Capture Manipulation', frame)
             if cv.waitKey(1) == ord('q'):
                 break
+        self.logger.info(str(i)+' times run')
         
         # When everything done, release the capture
         self.cap.release()
@@ -210,7 +251,7 @@ def main():
     logger = initLogger()
     Det = OCVDetector(logger)
     det = None
-    maxTries =  True
+#    maxTries =  True
     i = 0
     logger.info('main(): event-loop')
     while(True):
@@ -220,17 +261,8 @@ def main():
         except:
             continue
         i = i+1
-        logger.info('run ' + str(i) + ' times')
-        if(det == -1):
-            logger.error('no retrieval possible in OCVDetector')
-            continue
-        try:
-            det = Det.run()
-            logger.info('executed OCVDetector.run()')
-        except:
+        if(det==0):
             exit(-1)
-        if(not det == None):
-            logger.info('a frame was retrieved successfully')
  
  
 if __name__ == '__main__':

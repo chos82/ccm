@@ -1,3 +1,4 @@
+
 # ccm (cam capture manipulation)
 ## OpenCV with python-bindings
 
@@ -11,3 +12,4 @@
 ### goal of project:
 get python to have vectorized contours of detected objects (wich are provided by opencv pretrained models, e.g. face, body, etc.)
 missing (TODO):layer several opencv detection algorithms, apply histograms to detection frames
+
