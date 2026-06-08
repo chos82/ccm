@@ -18,24 +18,43 @@ SEPERATOR = '\n#################################################################
 __GREETING__  = SEPERATOR + '\nOpenCV CAM CAPTURE MANIPULATOR HAS STARTED\n' + SEPERATOR 
 __STD_MSG__   = 'Oh shit. Something BAD happened :('
 
+'eye'
+EYE = None
+EYEGLASSES = None
+FRONTALFACE = None
+FRONTALFACE_EXTENDED = None
+FRONTALFACE_DEFAULT = None
+FRONTALFACE_ALT = None
+FRONTALFACE_ALT_2 = None
+FRONTALFACE_ALT_TREE = None
+FULLBODY = None
+LEFTEYE = None
+LICENSE_PLATE_RUS = None
+LOWERBODY = None
+PROFILFACE = None
+RIGHTEYE_2SPLITS = None
+RUSSIAN_PLATE_NUMBER = None
+SMILE = None
+UPPERBODY = None
+
 __haarcascades__ = dict({
-        'eye': 'haarcascade_eye.xml',
-        'eyeglasses': 'haarcascade_eye_tree_eyeglasses.xml',
-        'frontalcatface': 'haarcascade_frontalcatface.xml',
-        'frontalcatface_extended': 'haarcascade_frontalcatface_extended.xml',
-        'frontalface_default':  'haarcascade_frontalface_default.xml',
-        'frontalface_alt': 'haarcascade_frontalface_alt.xml',
-        'frontalface_alt2': 'haarcascade_frontalface_alt2.xml',
-        'frontalface_alt_tree': 'haarcascade_frontalface_alt_tree.xml',
-        'fullbody': 'haarcascade_fullbody.xml',
-        'lefteye':'haarcascade_lefteye_2splits.xml',
-        'license_plate_rus':'haarcascade_license_plate_rus_16stages.xml',
-        'lowerbody': 'haarcascade_lowerbody.xml',
-        'profileface': 'haarcascade_profileface.xml',
-        'righteye_2splits': 'haarcascade_righteye_2splits.xml',
-        'russian_plate_number': 'haarcascade_russian_plate_number.xml',
-        'smile': 'haarcascade_smile.xml',
-        'upperbody': 'haarcascade_upperbody.xml'
+        EYE: 'haarcascade_eye.xml',
+        EYEGLASSES: 'haarcascade_eye_tree_eyeglasses.xml',
+        FRONTALFACE: 'haarcascade_frontalcatface.xml',
+        FRONTALFACE_EXTENDED: 'haarcascade_frontalcatface_extended.xml',
+        FRONTALFACE_DEFAULT:  'haarcascade_frontalface_default.xml',
+        FRONTALFACE_ALT: 'haarcascade_frontalface_alt.xml',
+        FRONTALFACE_ALT_2: 'haarcascade_frontalface_alt2.xml',
+        FRONTALFACE_ALT_TREE: 'haarcascade_frontalface_alt_tree.xml',
+        FULLBODY: 'haarcascade_fullbody.xml',
+        LEFTEYE:'haarcascade_lefteye_2splits.xml',
+        LICENSE_PLATE_RUS:'haarcascade_license_plate_rus_16stages.xml',
+        LOWERBODY: 'haarcascade_lowerbody.xml',
+        PROFILFACE: 'haarcascade_profileface.xml',
+        RIGHTEYE_2SPLITS: 'haarcascade_righteye_2splits.xml',
+        RUSSIAN_PLATE_NUMBER: 'haarcascade_russian_plate_number.xml',
+        SMILE: 'haarcascade_smile.xml',
+        UPPERBODY: 'haarcascade_upperbody.xml'
     })
 
 '''
@@ -61,6 +80,9 @@ class OCVDetector:
             logger.error("Cannot open camera")
             exit(-1)
         logger.info(__GREETING__)
+        
+        
+    def loadModel(self, model=EYE):
 
 
     '''
