@@ -102,9 +102,9 @@ class OCVDetector:
             
         return faces
 
-    def draw_bounding_box(self, frame, detected_objects):
+    def draw_bounding_box(self, frame, detected_objects, color=(0, 255, 0)):
         for (x,y,w,h) in detected_objects:
-            cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 4)
+            cv.rectangle(frame, (x, y), (x + w, y + h), color, 4)
         
 
 # @TODO
@@ -201,7 +201,7 @@ class OCVDetector:
             # detect and draw bounding box
             draw = []
             detected_objects = self.detect_bounding_box(frame)
-            self.draw_bounding_box(frame, detected_objects)
+            self.draw_bounding_box(frame, detected_objects, (255, 0, 0))
  
             cv.imshow('Cam Capture Manipulation', frame)
             if cv.waitKey(1) == ord('q'):
