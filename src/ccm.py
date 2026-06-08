@@ -169,7 +169,6 @@ class OCVDetector:
     def run(self):
         i = 0
         while True:
-            self.logger.info(str(i)+' times run')
             i = i+1
             
             # Capture frame-by-frame
@@ -186,6 +185,7 @@ class OCVDetector:
             cv.imshow('Cam Capture Manipulation', frame)
             if cv.waitKey(1) == ord('q'):
                 break
+        self.logger.info(str(i)+' times run')
         
         # When everything done, release the capture
         self.cap.release()
@@ -230,7 +230,7 @@ def main():
     logger = initLogger()
     Det = OCVDetector(logger)
     det = None
-    maxTries =  True
+#    maxTries =  True
     i = 0
     logger.info('main(): event-loop')
     while(True):
@@ -240,17 +240,8 @@ def main():
         except:
             continue
         i = i+1
-        logger.info('run ' + str(i) + ' times')
-        if(det == -1):
-            logger.error('no retrieval possible in OCVDetector')
-            continue
-        try:
-            det = Det.run()
-            logger.info('executed OCVDetector.run()')
-        except:
+        if(det==0):
             exit(-1)
-        if(not det == None):
-            logger.info('a frame was retrieved successfully')
  
  
 if __name__ == '__main__':
