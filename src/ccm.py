@@ -61,8 +61,7 @@ __haarcascades__ = dict({
 this class is mediating (mediator-pattern) from the OpenCV c-binaries to python-language
 '''
 class OCVDetector:
-    face_classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__['fullbody'])
-    fullbody_classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__['frontalface_default'])
+    classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__[FRONTALFACE_DEFAULT])
     logger = None
     cap = None
 
@@ -80,9 +79,16 @@ class OCVDetector:
             logger.error("Cannot open camera")
             exit(-1)
         logger.info(__GREETING__)
+        #self.loadModel(FRONTALFACE_DEFAULT)
+        #self.classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__[FRONTALFACE_DEFAULT])
+        logger.info('classifier is:')
+        logger.info(self.classifier)
         
         
     def loadModel(self, model=EYE):
+        file = __haarcascades__[model]
+        self.classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__[model])
+        self.logger.info('loaded ai-model file: ' + file)
 
 
     '''
@@ -94,7 +100,7 @@ class OCVDetector:
         
         gray_image = cv.cvtColor(vid, cv.COLOR_BGR2GRAY)
         #faces = self.face_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
-        faces = self.fullbody_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
+        faces = self.classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
         if(len(faces)==0):
             self.logger.info('no detectable found')
         else:
