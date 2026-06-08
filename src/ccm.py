@@ -18,50 +18,52 @@ SEPERATOR = '\n#################################################################
 __GREETING__  = SEPERATOR + '\nOpenCV CAM CAPTURE MANIPULATOR HAS STARTED\n' + SEPERATOR 
 __STD_MSG__   = 'Oh shit. Something BAD happened :('
 
-'eye'
-EYE = None
-EYEGLASSES = None
-FRONTALFACE = None
-FRONTALFACE_EXTENDED = None
-FRONTALFACE_DEFAULT = None
-FRONTALFACE_ALT = None
-FRONTALFACE_ALT_2 = None
-FRONTALFACE_ALT_TREE = None
-FULLBODY = None
-LEFTEYE = None
-LICENSE_PLATE_RUS = None
-LOWERBODY = None
-PROFILFACE = None
-RIGHTEYE_2SPLITS = None
-RUSSIAN_PLATE_NUMBER = None
-SMILE = None
-UPPERBODY = None
+EYE = 'eye',
+EYEGLASSES = 'eyeglasses',
+FRONTALFACE = 'frontalcatface',
+FRONTALFACE_EXTENDED = 'frontalcatface_extended',
+FRONTALFACE_DEFAULT = 'frontalface_defaultl',
+FRONTALFACE_ALT = 'frontalface_alt',
+FRONTALFACE_ALT_2 = 'frontalface_alt2',
+FRONTALFACE_ALT_TREE = 'frontalface_alt_tree',
+FULLBODY = 'fullbody',
+LEFTEYE = 'lefteye',
+LICENSE_PLATE_RUS = 'license_plate_rus',
+LOWERBODY = 'lowerbody',
+PROFILFACE = 'profileface',
+RIGHTEYE = 'righteye',
+RUSSIAN_PLATE_NUMBER = 'russian_plate_number',
+SMILE = 'smile',
+UPPERBODY = 'upperbody'
 
-__haarcascades__ = dict({
-        EYE: 'haarcascade_eye.xml',
-        EYEGLASSES: 'haarcascade_eye_tree_eyeglasses.xml',
-        FRONTALFACE: 'haarcascade_frontalcatface.xml',
-        FRONTALFACE_EXTENDED: 'haarcascade_frontalcatface_extended.xml',
-        FRONTALFACE_DEFAULT:  'haarcascade_frontalface_default.xml',
-        FRONTALFACE_ALT: 'haarcascade_frontalface_alt.xml',
-        FRONTALFACE_ALT_2: 'haarcascade_frontalface_alt2.xml',
-        FRONTALFACE_ALT_TREE: 'haarcascade_frontalface_alt_tree.xml',
-        FULLBODY: 'haarcascade_fullbody.xml',
-        LEFTEYE:'haarcascade_lefteye_2splits.xml',
-        LICENSE_PLATE_RUS:'haarcascade_license_plate_rus_16stages.xml',
-        LOWERBODY: 'haarcascade_lowerbody.xml',
-        PROFILFACE: 'haarcascade_profileface.xml',
-        RIGHTEYE_2SPLITS: 'haarcascade_righteye_2splits.xml',
-        RUSSIAN_PLATE_NUMBER: 'haarcascade_russian_plate_number.xml',
-        SMILE: 'haarcascade_smile.xml',
-        UPPERBODY: 'haarcascade_upperbody.xml'
-    })
+__models__= [
+    (EYE, 'haarcascade_eye.xml'),
+    (EYEGLASSES, 'haarcascade_eye_tree_eyeglasses.xml'),
+    (FRONTALFACE, 'haarcascade_frontalcatface.xml'),
+    (FRONTALFACE_EXTENDED, 'haarcascade_frontalcatface_extended.xml'),
+    (FRONTALFACE_DEFAULT, 'haarcascade_frontalface_default.xml'),
+    (FRONTALFACE_ALT, 'haarcascade_frontalface_alt.xml'),
+    (FRONTALFACE_ALT_2, 'haarcascade_frontalface_alt2.xml'),
+    (FRONTALFACE_ALT_TREE, 'haarcascade_frontalface_alt_tree.xml'),
+    (FULLBODY, 'haarcascade_fullbody.xml'),
+    (LEFTEYE, 'haarcascade_lefteye_2splits.xml'),
+    (LICENSE_PLATE_RUS, 'haarcascade_license_plate_rus_16stages.xml'),
+    (LOWERBODY, 'haarcascade_lowerbody.xml'),
+    (PROFILFACE, 'haarcascade_profileface.xml'),
+    (RIGHTEYE, 'haarcascade_righteye_2splits.xml'),
+    (RUSSIAN_PLATE_NUMBER, 'haarcascade_russian_plate_number.xml'),
+    (SMILE, 'haarcascade_smile.xml'),
+    (UPPERBODY, 'haarcascade_upperbody.xml')
+]
+
+__haarcascades__ = dict(__models__) 
 
 '''
 this class is mediating (mediator-pattern) from the OpenCV c-binaries to python-language
 '''
 class OCVDetector:
     classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__[FRONTALFACE_DEFAULT])
+    #classifier = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
     logger = None
     cap = None
 
@@ -79,18 +81,9 @@ class OCVDetector:
             logger.error("Cannot open camera")
             exit(-1)
         logger.info(__GREETING__)
-        #self.loadModel(FRONTALFACE_DEFAULT)
-        #self.classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__[FRONTALFACE_DEFAULT])
-        logger.info('classifier is:')
-        logger.info(self.classifier)
+        self.logger.info(FRONTALFACE_DEFAULT)
         
         
-    def loadModel(self, model=EYE):
-        file = __haarcascades__[model]
-        self.classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__[model])
-        self.logger.info('loaded ai-model file: ' + file)
-
-
     '''
     detects bounding boxes, according to selected ai-modell
     '''
