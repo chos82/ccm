@@ -106,82 +106,21 @@ class OCVDetector:
         for (x,y,w,h) in detected_objects:
             cv.rectangle(frame, (x, y), (x + w, y + h), color, 4)
         
-
-# @TODO
-# @returns largest bounding box of frames l1, l2
-    def max_bb(self, l1, l2=[]):
-        l = []
-        isNumpy_a = isinstance(l1, np.ndarray)
-        isNumpy_b = isinstance(l2, np.ndarray)
-        if(isNumpy_a):
-            l = l1
-        if(isNumpy_b):
-            l = l2
-        if(not(isNumpy_a and isNumpy_b)):
-            raise Exception('ArgumentError')
-            
-        x = l[0].shape
-        y = l.shape[1]
+    def get_subImage(self, frame, obj):
+        if(not isinstance(frame, np.ndarray)):
+            raise Exception('OCVDetector.get_subImage(): passed argument has wrong type')
+#        if(not len(obj)==1):
+#            raise Exception('OCVDetector.get_subImage(): passed argument must be exactly one rectangle object')
         
-        if(isinstance(l1, np.ndarray) and isinstance(l2, np.ndarray)):
-            self.logger.info('???????????')
-            #TODO
+        x = int(obj[0])
+        y = int(obj[1])
+        w = int(obj[2])
+        h = int(obj[3])
         
-        self.logger.info('shape of l[0]')
-        self.logger.info(x)
-        
-        return None
-
-    def unwrap_numpy(self, a):
-        if(not isinstance(a, np.ndarray)):
-            raise Exception('type missmatch', 'f:unwrapping')
-    
-        self.logger.info("unwrap_numpy\n__________________\n__________________")
-        self.logger.info(a[0])
-        self.logger.info(a[0][0])
-        t = 'variable to store type of function unwrap_numpy parameter'
-        try:
-            t=type(int(a[0][0]))
-        except TypeError:
-            m = a[0]
-            n = a[0][0]
-            self.logger.info('this is unwrap_numpy`s parameter a[0]:')
-            self.logger.info(m)
-            self.logger.info('this is unwrap_numpy`s parameter a[0][0]:')
-            self.logger.info(n)
-            s = a[0][0].shape
-            self.logger.info('this is unwrap_numpy`s parameter a[0][0].scale:')
-            self.logger.info(s)
-            t = type(a[0][0].shape)
-            self.logger.info('this is unwrap_numpy`s parameter a[0][0].scale.type:')
-            self.logger.info(t)
-
-            self.logger.error('coud not convert numpy ndarray to python scaLar')
-            raise Exception('CRITICAL')
-            
-        
-        
-        #'CONTINUE'
-        
-        
-        
-        self.logger.info('ööööööö')
-        self.logger.info(t)
-    
-        try:
-            x = int(a[0][0])
-            y = int(a[0][1])
-            w = int(a[0][2])
-            h = int(a[0][3])
-        except:
-            raise Exception('unwrap_numpyl104')
-    
-        self.logger.info('x,y,w,h')
-        print(x, y, w, h)
-        self.logger.info(x)
-        self.logger.info('now its unwrapped')
-        
-        return (x,y,w,h)
+        ret = frame[x:x+w, y:y+h]
+        self.logger.info('SUBIMAGE')
+        self.logger.info(ret)
+        return ret
     
     '''
     executes the detection
@@ -196,14 +135,19 @@ class OCVDetector:
             frame = self.readCapture()
             
             # Our operations on the frame come here
-            gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+#            gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
             # detect and draw bounding box
-            draw = []
             detected_objects = self.detect_bounding_box(frame)
             self.draw_bounding_box(frame, detected_objects, (255, 0, 0))
+            
+            sub_frame = self.get_subImage(frame, detected_objects[0])
+            ####################################
+            ## TODO: operations on sub_frame ###
+            ####################################
  
             cv.imshow('Cam Capture Manipulation', frame)
+            
             if cv.waitKey(1) == ord('q'):
                 break
         self.logger.info(str(i)+' times run')
