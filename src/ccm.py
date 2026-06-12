@@ -13,6 +13,7 @@ import cv2 as cv
 
 import logging
 import unittest
+from test.test_signal import PidfdSignalTest
 
 SEPERATOR = '\n###################################################################\n'
 __GREETING__  = SEPERATOR + '\nOpenCV CAM CAPTURE MANIPULATOR HAS STARTED\n' + SEPERATOR 
@@ -65,12 +66,53 @@ class PartialFrame:
     w = 0
     frame_part = None
     
-    def __init__(self, frame_part, x, y, w, h):
+    def __init__(self, frame_part, x, y):
+        if(not isinstance(frame_part, np.ndarray)):
+            raise Exception('1st positional argument (frame_part) must be of type numpy.ndarray')
         self.frame_part = frame_part
         self.x = x
         self.y = y
-        self.w = w
-        self.h = h
+        self.w = frame_part.shape[0]
+        self.h = frame_part.shape[1]
+        
+    def match_size(self, frame, x, y):
+        '''
+        tests if frame and self.frame_part do have the same size
+        if so, do nothing. if not, self.frame_part will be enlarged to size of frame (x and y dimension)
+        if self.frame_part is larger than frame an exception is raised
+        '''
+        # do frame and replacement have the same size?
+        if(frame.shape[0] == self.frame_part.shape[0] and 
+            frame.shape[1] == self.frame_part.shape[1]):
+            return
+        if(frame.shape[0] < self.frame_part.shape[0] or
+            frame.shape[1] < self.frame_part.shape[1]):
+            raise Exception('cannot match size of a partial frame to size of a frame if partial frame id larger than frame')
+            
+        empty_line = [None for _i in range(frame.shape[1])]
+
+
+        def construct_line(start, stop):
+            ret = []
+            i = 0
+            while i < frame.shape[1]:
+                if(i < start or i >= stop):
+                    ret.append(None)
+                    i = i + 1
+                else:
+                    ret.extend(self.frame_part[i])
+                    i = i + self.frame_part.shape[1]
+            return ret
+        
+        result_frame = []
+        
+        for i in range(frame.shape[0]):
+            if(i < x or i > x + self.frame_part.shape[0]):
+                result_frame.append(empty_line)
+            else:
+                result_frame.append( construct_line(y, y + self.frame_part.shape[1]) )
+        
+        return np.array(result_frame)
         
 
 '''
@@ -131,38 +173,42 @@ class OCVDetector:
         h = int(int(obj[3]) + add_y)
         
         frm_prt = frame[x:x+w, y:y+h]
-        ret = PartialFrame(frm_prt, x, y, w, h)
+        ret = None
+        try:
+            ret = PartialFrame(frm_prt, x, y)
+        except Exception as e:
+            raise Exception('could not construct PartialFrame') from e
         
         return ret
     
-    def replace_subImage(self, frame, replacement, obj=(0,0,0,0)):
+    
+    def replace_subImage(self, frame, replacement):
         if(not isinstance(frame, np.ndarray)):
             raise Exception('OCVDetector.get_subImage(): passed argument has wrong type')
-        if(not isinstance(replacement, np.ndarray)):
+        if(not isinstance(replacement, PartialFrame)):
             raise Exception('OCVDetector.get_subImage(): passed argument has wrong type')
         
+        #rep = None
+        
         def in_part_dim1(i, start, stop):
-            if(i < start):
-                return False
-            if(i > stop):
+            if(i < start or i > stop):
                 return False
             return True
         
         def in_part_dim0(i, start, stop):
             if(i < start or i > stop):
-                #return np.full((1, frame.shape[1]), False)
                 return [False for _i in range(frame.shape[1])]
             return line
         
-        line = [in_part_dim1(i, obj[0], obj[0] + obj[2]) for i in range(frame.shape[1])]
-        mask = [in_part_dim0(i, obj[1], obj[1]+obj[3]) for i in range(frame.shape[0])]
+        line = [in_part_dim1(i, replacement.x, replacement.x + replacement.w) for i in range(frame.shape[1])]
+        mask = [in_part_dim0(i, replacement.y, replacement.y + replacement.h) for i in range(frame.shape[0])]
         try:
             mask = np.array(mask)
         except Exception as e:
             raise Exception('could not construct numpy.array from mask') from e
         
         try:
-            np.copyto(frame, replacement, where=mask)
+            np.copyto(frame, replacement.frame_part, where=mask)
         except Exception as e:
             raise Exception('could not copy replacement into frame (given a mask)') from e
         
@@ -187,25 +233,39 @@ class OCVDetector:
             detected_objects = self.detect_bounding_box(frame)
             self.draw_bounding_box(frame, detected_objects, (255, 0, 0))
             
-            # get black/white frame and thresholded frma from it
+            # get black/white frame and thresholded frame from it
             gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-            _ret, im = cv.threshold(gray_frame, 100, 255, cv.THRESH_BINARY)
+            _ret, bw_frame = cv.threshold(gray_frame, 100, 255, cv.THRESH_BINARY)
             
             # find contours in thresholded frame and draw them
-            contours, _hierarchy  = cv.findContours(im, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-            _ret = cv.drawContours(im, contours, -1, (0,255,75), 2)
+            contours, _hierarchy  = cv.findContours(bw_frame, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+            
+            frame_contour = cv.drawContours(frame, contours, -1, (0,255,75), 2)
             
             x = detected_objects[0][0]
             y = detected_objects[0][1]
             w = detected_objects[0][2]
             h = detected_objects[0][3]
             obj = (x,y,w,h)
-            gray_frame = self.replace_subImage(gray_frame, im, obj)
+           
+            frame_part = None
+            try:
+                frame_contour = self.get_subImage(frame, obj, 50, 50)
+            except Exception as e:
+                raise Exception('could not obtain frame part') from e 
+            
+            frame_part = frame_contour
+            
+            try:
+                frame = self.replace_subImage(frame, frame_part)
+            except Exception as e:
+                raise Exception('could not replace partial into frame') from e 
+            
             ####################################
             ## TODO: operations on sub_frame ###
             ####################################
  
-            cv.imshow('Cam Capture Manipulation', gray_frame)
+            cv.imshow('Cam Capture Manipulation', frame)
             
             if cv.waitKey(1) == ord('q'):
                 break
@@ -307,9 +367,24 @@ class OCVDetectorTest(unittest.TestCase):
         isTuple = isinstance(detectedObject, np.ndarray)
         self.assertTrue(isTuple, 'OCVDetector.detect_bounding_box correctly returns a value of type tuple')
         self.assertTrue(detectedObject.shape == 1)
+        
+        
+class PartialFrameTest(unittest.TestCase):
+    frame = np.array(
+            [[i for i in range(50)] for j in range(50)]
+        )
+    frame_part = np.array(
+            [[i for i in range(20)] for j in range(30)]
+        )
+    pf = PartialFrame(frame_part, 10, 5)
+    
+    def testMatchSize(self):
+        mf = self.pf.match_size(self.frame, self.pf.x, self.pf.y)
+        self.assertTrue(mf is not None)
+        self.assertEqual(mf.shape[0], self.frame.shape[0])
+        self.assertEqual(mf.shape[1], self.frame.shape[1])
                 
-        
-        
+                
 class ScriptTest(unittest.TestCase):
     def testMainProcedure(self):
         main()
