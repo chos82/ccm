@@ -78,7 +78,6 @@ this class is mediating (mediator-pattern) from the OpenCV c-binaries to python-
 '''
 class OCVDetector:
     classifier = cv.CascadeClassifier(cv.data.haarcascades + __haarcascades__[FRONTALFACE_DEFAULT])
-    #classifier = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
     logger = None
     cap = None
 
@@ -107,7 +106,6 @@ class OCVDetector:
             raise Exception('OCVDetector.detect_bounding_box(): passed argument has wrong type')
         
         gray_image = cv.cvtColor(vid, cv.COLOR_BGR2GRAY)
-        #faces = self.face_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
         faces = self.classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
         if(len(faces)==0):
             self.logger.info('no detectable found')
@@ -124,8 +122,8 @@ class OCVDetector:
     def get_subImage(self, frame, obj, add_x=0, add_y=0):
         if(not isinstance(frame, np.ndarray)):
             raise Exception('OCVDetector.get_subImage(): passed argument has wrong type')
-#        if(not len(obj)==1):
-#            raise Exception('OCVDetector.get_subImage(): passed argument must be exactly one rectangle object')
+        if(not len(obj)==4):
+            raise Exception('OCVDetector.get_subImage(): passed argument must be exactly one rectangle object')
         
         x = int(int(obj[0]) - add_x *.5)
         y = int(int(obj[1]) - add_y *.5)
@@ -135,8 +133,6 @@ class OCVDetector:
         frm_prt = frame[x:x+w, y:y+h]
         ret = PartialFrame(frm_prt, x, y, w, h)
         
-#        self.logger.info('SUBIMAGE')
-#        self.logger.info(frm_prt)
         return ret
     
     def replace_subImage(self, frame, replacement, obj=(0,0,0,0)):
@@ -158,10 +154,7 @@ class OCVDetector:
                 return [False for _i in range(frame.shape[1])]
             return line
         
-#        zeros_1 = np.zeros(frame.shape[1])
-#        line = [x for x in range(frame.shape[1])]
         line = [in_part_dim1(i, obj[0], obj[0] + obj[2]) for i in range(frame.shape[1])]
-        #line = np.array(line)
         mask = [in_part_dim0(i, obj[1], obj[1]+obj[3]) for i in range(frame.shape[0])]
         try:
             mask = np.array(mask)
@@ -175,28 +168,6 @@ class OCVDetector:
         
         return frame        
         
-        # self.logger.info('frame.shape:')
-        # self.logger.info(frame.shape)
-        # self.logger.info('replacement.frame_part.shape:')
-        # self.logger.info(replacement.frame_part.shape)
-        # try:
-        #     frame[replacement.x:replacement.x + replacement.w,
-        #         replacement.y:replacement.y + replacement.h] = replacement.frame_part
-        # except Exception as e:
-        #     self.logger.error('FUCK')
-        #     self.logger.info(e.__str__())
-        #     self.logger.info('frame.shape:')
-        #     self.logger.info(frame.shape)
-        #     self.logger.info('replacement.frame_part.shape:')
-        #     self.logger.info(replacement.frame_part.shape)
-        #
-        #     raise e
-        #
-        # self.logger.info('replace_subImage replaced a partial frame')
-        #
-        # return frame
-        #
-
     '''
     executes the detection
     '''
@@ -216,32 +187,23 @@ class OCVDetector:
             detected_objects = self.detect_bounding_box(frame)
             self.draw_bounding_box(frame, detected_objects, (255, 0, 0))
             
-#            sub_frame = self.get_subImage(frame, detected_objects[0], add_x=50, add_y=50)
-#            gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-#            _ret, im = cv.threshold(gray, 100, 255, cv.THRESH_BINARY)
-            
-            sub_frame = self.get_subImage(frame, detected_objects[0], add_x=50, add_y=50)
-            gray_sub_frame = cv.cvtColor(sub_frame.frame_part, cv.COLOR_BGR2GRAY)
+            # get black/white frame and thresholded frma from it
             gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             _ret, im = cv.threshold(gray_frame, 100, 255, cv.THRESH_BINARY)
             
+            # find contours in thresholded frame and draw them
             contours, _hierarchy  = cv.findContours(im, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-            contour = cv.drawContours(im, contours, -1, (0,255,75), 2)
+            _ret = cv.drawContours(im, contours, -1, (0,255,75), 2)
             
             x = detected_objects[0][0]
             y = detected_objects[0][1]
             w = detected_objects[0][2]
             h = detected_objects[0][3]
-#            replacement = PartialFrame(im, x, y, w, h)
             obj = (x,y,w,h)
             gray_frame = self.replace_subImage(gray_frame, im, obj)
-            self.logger.info('replaced_subImage into:')
-            self.logger.info(gray_frame)
             ####################################
             ## TODO: operations on sub_frame ###
             ####################################
-            
-            
  
             cv.imshow('Cam Capture Manipulation', gray_frame)
             
