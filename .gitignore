@@ -1,3 +1,11 @@
+.settings/
+.project
+.pydevproject
+
+###########################
+#### .gitignore from github
+###########################
+
 *.log
 
 # Byte-compiled / optimized / DLL files
