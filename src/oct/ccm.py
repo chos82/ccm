@@ -206,6 +206,7 @@ class OCVDetector:
 
         try:
             np.copyto(frame, matched_part, where=mask, casting='unsafe')
+            self.logger.info('replaced a sub-frame')
         except Exception as e:
             raise Exception('could not copy replacement into frame (given a mask)') from e
         
@@ -216,6 +217,7 @@ class OCVDetector:
     '''
     def run(self):
         i = 0
+        cv.namedWindow('CCM', cv.WINDOW_KEEPRATIO)
         while True:
             i += 1
             
@@ -230,7 +232,7 @@ class OCVDetector:
 
             # FIX #4: Guard – kein Zugriff auf Index 0 wenn keine Objekte erkannt
             if len(detected_objects) == 0:
-                cv.imshow('Cam Capture Manipulation', frame)
+                cv.imshow('CCM', frame)
                 if cv.waitKey(1) == ord('q'):
                     break
                 continue
@@ -260,7 +262,7 @@ class OCVDetector:
             ## TODO: operations on sub_frame ###
             ####################################
 
-            cv.imshow('Cam Capture Manipulation', frame)
+            cv.imshow('CCM', frame)
 
             if cv.waitKey(1) == ord('q'):
                 break
