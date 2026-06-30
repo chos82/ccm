@@ -183,6 +183,8 @@ class OCVDetector:
         except Exception as e:
             raise Exception('could not construct PartialFrame') from e
         
+        self.logger.info('extracted partial frame, x: {}, y: {}, w: {}, h: {}'.format(x, y, w, h))
+        
         return ret
 
     def replace_subImage(self, frame, replacement):
@@ -248,15 +250,19 @@ class OCVDetector:
             obj = tuple(detected_objects[0])
 
             try:
-                frame_part = self.get_subImage(frame, obj, 50, 50)
+                frame_part = self.get_subImage(bw_frame, obj, 100, 100)
             except Exception as e:
                 raise Exception('could not obtain frame part') from e
+            
 
-            try:
-                frame = self.replace_subImage(frame, frame_part)
-            except Exception as e:
-                self.logger.error(e)
-                raise Exception('could not replace partial into frame') from e
+            contours, _hierarchy = cv.findContours(bw_frame, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+            frame = cv.drawContours(frame, contours, -1, (0, 255, 75), 2)
+            
+            # try:
+            #     frame = self.replace_subImage(frame, frame_part)
+            # except Exception as e:
+            #     self.logger.error(e)
+            #     raise Exception('could not replace partial into frame') from e
 
             ####################################
             ## TODO: operations on sub_frame ###
@@ -280,7 +286,7 @@ class OCVDetector:
         if not ret:
             raise Exception('OCVDetector.readCapture(): could not receive video stream')
         return frame
-
+    
 # --------class end-------
 # end of class OCVDetector
 
