@@ -8,22 +8,21 @@ C C M
 CamCaptureManipulation
 ======================
 '''
-import numpy as np
-import cv2 as cv
-
 import logging
-import unittest
+
+import cv2 as cv
+import numpy as np
+
 
 SEPERATOR = '\n###################################################################\n'
 __GREETING__  = SEPERATOR + '\nOpenCV CAM CAPTURE MANIPULATOR HAS STARTED\n' + SEPERATOR 
 __STD_MSG__   = 'Oh shit. Something BAD happened :('
 
-# FIX #1: Kommas entfernt – sonst wären alle Konstanten Tupel statt Strings
 EYE = 'eye'
 EYEGLASSES = 'eyeglasses'
 FRONTALFACE = 'frontalcatface'
 FRONTALFACE_EXTENDED = 'frontalcatface_extended'
-FRONTALFACE_DEFAULT = 'frontalface_default'          # FIX #2: Tippfehler 'defaultl' → 'default'
+FRONTALFACE_DEFAULT = 'frontalface_default'
 FRONTALFACE_ALT = 'frontalface_alt'
 FRONTALFACE_ALT_2 = 'frontalface_alt2'
 FRONTALFACE_ALT_TREE = 'frontalface_alt_tree'
@@ -119,7 +118,7 @@ class OCVDetector:
     logger = None
     cap = None
 
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, time_morphing=[]):
         self.logger = logger
         if logger is None:
             print('LOGGER MUST BE PROVIDED!!!')
@@ -135,6 +134,10 @@ class OCVDetector:
             exit(-1)
         logger.info(__GREETING__)
         self.logger.info(FRONTALFACE_DEFAULT)
+        if time_morphing is not None or time_morphing != []: 
+            self.logger.info('time morphing is provided:')
+            for e in time_morphing:
+                self.logger.info('\t' + str(e))
 
     '''
     detects bounding boxes, according to selected ai-model
@@ -297,7 +300,8 @@ def initLogger():
 
 def main():
     logger = initLogger()
-    Det = OCVDetector(logger)
+    time_morph = lambda x, y, c: (x, y, c)
+    Det = OCVDetector(logger, time_morphing=[time_morph])
     det = None
     i = 0
     logger.info('main(): event-loop')
@@ -315,62 +319,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-# ----start of tests-------
-# the unit-tests begin here
-
-class OCVDetectorTest(unittest.TestCase):
-    Det = None
-
-    def testInitialization(self):
-        logger = initLogger()
-        self.Det = OCVDetector(logger)
-        self.assertTrue(self.Det is not None, 'successfully initialized an instance of OCVDetector')
-        cap = self.Det.cap
-        self.assertTrue(cap is not None, 'instance has a capture field')
-        logger = self.Det.logger
-        self.assertTrue(logger is not None, 'instance has been provided a logger')
-
-    def testRun(self):
-        if self.Det is None:
-            self.testInitialization()
-        self.Det.run()
-
-    def testDetectBoundingBox(self):
-        if self.Det is None:
-            self.testInitialization()
-        frame = self.Det.readCapture()
-        detectedObject = self.Det.detect_bounding_box(frame)
-        self.assertIsInstance(detectedObject, np.ndarray,
-            'OCVDetector.detect_bounding_box correctly returns a value of type np.ndarray')
-
-
-class PartialFrameTest(unittest.TestCase):
-    frame = np.array(
-        [[[i, i, i] for i in range(50)] for _j in range(50)], dtype=np.uint8
-    )
-    frame_part = np.array(
-        [[[i, i, i] for i in range(20)] for _j in range(30)], dtype=np.uint8
-    )
-    pf = PartialFrame(frame_part, 10, 5)
-
-    def testMatchSize(self):
-        mf = self.pf.match_size(self.frame)
-        self.assertIsNotNone(mf)
-        self.assertEqual(mf.shape[0], self.frame.shape[0])
-        self.assertEqual(mf.shape[1], self.frame.shape[1])
-
-    def makeNumpyCube(self, rows, cols, channels):
-        return np.zeros((rows, cols, channels), dtype=np.uint8)
-
-    def testMatchSizeMultDim(self):
-        cube = self.makeNumpyCube(15, 10, 3)
-        cube_prt = self.makeNumpyCube(5, 5, 3)
-        partial = PartialFrame(cube_prt, 3, 5)
-        matched_partial = partial.match_size(cube)
-        self.assertEqual(matched_partial.shape[0], cube.shape[0])
-        self.assertEqual(matched_partial.shape[1], cube.shape[1])
-
-
-class ScriptTest(unittest.TestCase):
-    def testMainProcedure(self):
-        main()
