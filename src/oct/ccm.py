@@ -228,7 +228,11 @@ class OCVDetector:
             except Exception:
                 break
 
+            ############################################################
+            # ...?.?.?...o|o.. 
             # detect and draw bounding box
+            # OBJECT DETECTION // MODEL MATCHING
+            ############################################################
             detected_objects = self.detect_bounding_box(frame)
             self.draw_bounding_box(frame, detected_objects, (255, 0, 0))
 
@@ -239,14 +243,24 @@ class OCVDetector:
                     break
                 continue
 
+            ############################################################
+            # OBTAIN ADDITIONAL COLOR SPACES            
             # get black/white frame and thresholded frame from it
+            ############################################################
             gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             _ret, bw_frame = cv.threshold(gray_frame, 100, 255, cv.THRESH_BINARY)
             
+            ############################################################
             # find contours in thresholded frame and draw them
+            # FIND AND DRAW CONTOURS
+            ############################################################
             contours, _hierarchy = cv.findContours(bw_frame, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
             frame = cv.drawContours(frame, contours, -1, (0, 255, 75), 2)
 
+            
+            ############################################################
+            # FRAME SLICING
+            ############################################################
             obj = tuple(detected_objects[0])
 
             try:
@@ -255,18 +269,16 @@ class OCVDetector:
                 raise Exception('could not obtain frame part') from e
             
 
-            contours, _hierarchy = cv.findContours(bw_frame, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-            frame = cv.drawContours(frame, contours, -1, (0, 255, 75), 2)
-            
+
+            ############################################################
+            # FRAME COMBINATION
+            ############################################################            
             # try:
             #     frame = self.replace_subImage(frame, frame_part)
             # except Exception as e:
             #     self.logger.error(e)
             #     raise Exception('could not replace partial into frame') from e
 
-            ####################################
-            ## TODO: operations on sub_frame ###
-            ####################################
 
             cv.imshow('CCM', frame)
 
