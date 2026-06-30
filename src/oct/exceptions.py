@@ -2,13 +2,10 @@
 exceptions for project cam-capture manipulation with OpenCV
 '''
 
-from inspect import currentframe, getframeinfo
-
-
 class OCTException(Exception):
-    def __init__(self, message = ''):
-        frameinfo = getframeinfo(currentframe())
-        message = message + '\n\tin: {}\tline {}'.format(frameinfo.filename, frameinfo.lineno)
+    def __init__(self, message = '', frameinfo = None):
+        if frameinfo is not None:
+            message = message + '\tin: {}\tline {}\n'.format(frameinfo.filename, frameinfo.lineno)
         super().__init__(message)
     
 

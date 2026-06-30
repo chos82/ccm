@@ -8,10 +8,13 @@ C C M
 CamCaptureManipulation
 ======================
 '''
+from asyncio.log import logger
+from inspect import currentframe, getframeinfo
 import logging
 
 import cv2 as cv
 import numpy as np
+from oct.exceptions import OCTException
 
 
 SEPERATOR = '\n###################################################################\n'
@@ -250,6 +253,19 @@ class OCVDetector:
             gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             _ret, bw_frame = cv.threshold(gray_frame, 100, 255, cv.THRESH_BINARY)
             
+            hsv_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+            
+            ############################################################
+            # OBJECT TRACKING, see: https://opencv-opencv.mintlify.app/api/video/motion
+            ############################################################   
+            try:         
+                back_proj = cv.calcBackProject(hsv_frame, 1, [], [])
+            except Exception as e:
+                frameinfo = getframeinfo(currentframe())
+                raise OCTException(e.msg, frameinfo)
+            self.logger.info('calculated back projection')
+            self.logger.info(back_proj)
+            
             ############################################################
             # find contours in thresholded frame and draw them
             # FIND AND DRAW CONTOURS
@@ -268,7 +284,6 @@ class OCVDetector:
             except Exception as e:
                 raise Exception('could not obtain frame part') from e
             
-
 
             ############################################################
             # FRAME COMBINATION
@@ -329,7 +344,8 @@ def main():
         try:
             det = Det.run()
             logger.info('executed OCVDetector.run()')
-        except Exception:
+        except Exception as e:
+            logger.error(e)
             continue
         i += 1
         if det == 0:
